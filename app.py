@@ -10,7 +10,6 @@ st.set_page_config(
 
 st.title("Shreeyans Arora NER SpaCy Assignment")
 
-# Custom CSS with color-coded entity categories
 st.markdown("""
 <style>
     .main {
@@ -122,14 +121,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Input area
 user_input = st.text_area("Enter your prompt:", height=150)
 
 if st.button("Send", type="primary"):
     if user_input:
         with st.spinner("Processing..."):
             try:
-                # Call FastAPI backend
                 response = requests.post(
                     "http://localhost:8000/process",
                     json={"text": user_input}
@@ -138,10 +135,8 @@ if st.button("Send", type="primary"):
                 if response.status_code == 200:
                     result = response.json()
                     
-                    # Display entities with color coding
                     st.subheader("📊 Detected Named Entities")
                     if result["entities"]:
-                        # Create a legend for entity types
                         st.markdown("### Entity Type Legend")
                         st.markdown('<div class="legend">', unsafe_allow_html=True)
                         for entity in result["entities"]:
@@ -151,7 +146,6 @@ if st.button("Send", type="primary"):
                             )
                         st.markdown('</div>', unsafe_allow_html=True)
                         
-                        # Display entities in a structured format
                         for entity in result["entities"]:
                             st.markdown(f"""
                             <div class="entity-box">
@@ -162,7 +156,6 @@ if st.button("Send", type="primary"):
                     else:
                         st.info("No named entities detected.")
                     
-                    # Display LLM response in a styled box
                     st.subheader("🤖 LLM Response")
                     st.markdown(f"""
                     <div class="response-box">
@@ -170,7 +163,6 @@ if st.button("Send", type="primary"):
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Highlight entities in the original text
                     st.subheader("📝 Original Text with Highlighted Entities")
                     highlighted_text = user_input
                     for entity in result["entities"]:

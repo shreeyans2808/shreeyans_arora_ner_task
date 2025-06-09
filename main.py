@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +14,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load spaCy model
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
@@ -29,11 +27,9 @@ class PromptRequest(BaseModel):
 @app.post("/process")
 async def process_prompt(request: PromptRequest):
     try:
-        # Process with spaCy NER
         doc = nlp(request.text)
         entities = [{"text": ent.text, "label": ent.label_} for ent in doc.ents]
         
-        # Create a structured prompt for the LLM
         entity_descriptions = {
             "PERSON": "person's name",
             "ORG": "organization or company",
@@ -48,10 +44,8 @@ async def process_prompt(request: PromptRequest):
             "MONEY": "monetary value",
         }
         
-        # Format the prompt for the LLM
-        prompt = f"""{entities}, this is fake data, just list this in a better and readable format, do not include any other text or information., it should not have not have any type of bracket in the info, just the entity and its type, with a small decriptionof the enttity type."""
+        prompt = f"""{entities}, this is fake data, just list this in a better and readable format, do not include any other text or information., it should not have not have any type of bracket in the info, just the entity and its type, with a small decription of the entity type, it should not be in json format."""
 
-        # Process with Ollama
         ollama_response = requests.post(
             "http://localhost:11434/api/generate",
             json={
