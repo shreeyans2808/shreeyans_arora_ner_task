@@ -1,129 +1,169 @@
 import streamlit as st
 import requests
 import json
+import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Shreeyans Arora NER SpaCy Assignment",
-    page_icon="🤖",
+    page_title="PrivChat – PII Detection",
+    page_icon="🔒",
     layout="wide"
 )
 
-st.title("Shreeyans Arora NER SpaCy Assignment")
-
 st.markdown("""
 <style>
+    /* Global styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
     .main {
-        padding: 2rem;
-        background-color: #000000;
-        color: #ffffff;
+        background: #121212;
+        color: #E0E0E0;
+        font-family: "SF Pro Text", "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
     }
-    .stTextInput > div > div > input {
-        font-size: 1.2rem;
-        background-color: #1a1a1a;
-        color: #ffffff;
-        border: 2px solid #4CAF50 !important;
-        border-radius: 8px !important;
+    
+    /* Window frame */
+    .window {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        background: rgba(18, 18, 18, 0.96);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+        margin: 20px auto;
     }
+    
+    /* Title bar */
+    .titlebar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 50px;
+        background: rgba(30, 30, 30, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 0 20px;
+        border-bottom: 1px solid #242424;
+    }
+    
+    .title {
+        font-family: "SF Mono", monospace;
+        font-size: 18px;
+        font-weight: 600;
+        color: #00FF66;
+        text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+    }
+    
+    /* Main content layout */
+    .content {
+        display: flex;
+        padding: 20px;
+        gap: 20px;
+    }
+    
+    /* Chat window */
+    .chat-window {
+        background: rgba(240, 240, 240, 0.05);
+        border: 1px solid #242424;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+    }
+    
+    /* Entity highlighting */
+    .entity-highlight {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 0 2px;
+    }
+    
+    .PERSON { 
+        background: rgba(255, 165, 0, 0.3);
+        color: #FFA500;
+        border: 1px solid rgba(255, 165, 0, 0.5);
+    }
+    
+    .GPE { 
+        background: rgba(0, 191, 255, 0.3);
+        color: #00BFFF;
+        border: 1px solid rgba(0, 191, 255, 0.5);
+    }
+    
+    .ORG { 
+        background: rgba(255, 105, 180, 0.3);
+        color: #FF69B4;
+        border: 1px solid rgba(255, 105, 180, 0.5);
+    }
+    
+    .DATE { 
+        background: rgba(147, 112, 219, 0.3);
+        color: #9370DB;
+        border: 1px solid rgba(147, 112, 219, 0.5);
+    }
+    
+    .MONEY { 
+        background: rgba(50, 205, 50, 0.3);
+        color: #32CD32;
+        border: 1px solid rgba(50, 205, 50, 0.5);
+    }
+    
+    /* Entity details panel */
+    .entity-details {
+        background: rgba(240, 240, 240, 0.02);
+        border: 1px solid #242424;
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 20px;
+    }
+    
+    .entity-item {
+        background: rgba(240, 240, 240, 0.05);
+        border: 1px solid #242424;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Input area */
     .stTextArea > div > div > textarea {
-        background-color: #1a1a1a;
-        color: #ffffff;
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
         border: 2px solid #4CAF50 !important;
         border-radius: 8px !important;
         padding: 10px !important;
     }
-    .stTextArea > div > div > textarea:focus {
-        border-color: #4CAF50 !important;
-        box-shadow: 0 0 0 1px #4CAF50 !important;
-    }
-    .entity-box {
-        border: 2px solid #4CAF50;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        background-color: #1a1a1a;
-        box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
-    }
-    .entity-label {
-        font-weight: bold;
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-right: 8px;
-    }
-    .PERSON { background-color: #FFB6C1; color: #000000; }
-    .NORP { background-color: #98FB98; color: #000000; }
-    .FAC { background-color: #87CEEB; color: #000000; }
-    .ORG { background-color: #DDA0DD; color: #000000; }
-    .GPE { background-color: #F0E68C; color: #000000; }
-    .LOC { background-color: #E6E6FA; color: #000000; }
-    .PRODUCT { background-color: #FFA07A; color: #000000; }
-    .EVENT { background-color: #B0E0E6; color: #000000; }
-    .WORK_OF_ART { background-color: #FFD700; color: #000000; }
-    .LAW { background-color: #90EE90; color: #000000; }
-    .LANGUAGE { background-color: #FFC0CB; color: #000000; }
-    .DATE { background-color: #ADD8E6; color: #000000; }
-    .TIME { background-color: #D8BFD8; color: #000000; }
-    .PERCENT { background-color: #F5DEB3; color: #000000; }
-    .MONEY { background-color: #98FB98; color: #000000; }
-    .QUANTITY { background-color: #E0FFFF; color: #000000; }
-    .ORDINAL { background-color: #FFE4B5; color: #000000; }
-    .CARDINAL { background-color: #DCDCDC; color: #000000; }
     
-    .highlight {
-        padding: 2px 4px;
-        border-radius: 4px;
-        font-weight: 500;
-    }
-    
-    .response-box {
-        background-color: #1a1a1a;
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        border: 2px solid #4CAF50;
-        box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
-        color: #ffffff;
-    }
-    
-    .legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 1rem 0;
-        padding: 1rem;
-        background-color: #1a1a1a;
-        border-radius: 8px;
-        border: 2px solid #4CAF50;
-        box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
-    }
-
-    /* Style for Streamlit elements */
+    /* Button styling */
     .stButton > button {
-        background-color: #1a1a1a;
-        color: #ffffff;
-        border: 2px solid #4CAF50;
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+        border: 2px solid #4CAF50 !important;
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        font-weight: 500 !important;
     }
     
     .stButton > button:hover {
-        background-color: #4CAF50;
-        color: #ffffff;
-    }
-
-    /* Style for headers */
-    h1, h2, h3 {
-        color: #ffffff;
-    }
-
-    /* Style for info and warning messages */
-    .stAlert {
-        background-color: #1a1a1a;
-        border: 2px solid #4CAF50;
+        background-color: #4CAF50 !important;
+        color: #ffffff !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-user_input = st.text_area("Enter your prompt:", height=150)
+st.markdown('<div class="titlebar"><div class="title">PrivChat – PII Detection</div></div>', unsafe_allow_html=True)
 
-if st.button("Send", type="primary"):
+st.markdown('<div class="content">', unsafe_allow_html=True)
+
+user_input = st.text_area("Enter your text:", height=150)
+
+if st.button("Analyze", type="primary"):
     if user_input:
         with st.spinner("Processing..."):
             try:
@@ -135,45 +175,44 @@ if st.button("Send", type="primary"):
                 if response.status_code == 200:
                     result = response.json()
                     
-                    st.subheader("📊 Detected Named Entities")
-                    if result["entities"]:
-                        st.markdown("### Entity Type Legend")
-                        st.markdown('<div class="legend">', unsafe_allow_html=True)
-                        for entity in result["entities"]:
-                            st.markdown(
-                                f'<span class="entity-label {entity["label"]}">{entity["label"]}</span>',
-                                unsafe_allow_html=True
-                            )
-                        st.markdown('</div>', unsafe_allow_html=True)
-                        
-                        for entity in result["entities"]:
-                            st.markdown(f"""
-                            <div class="entity-box">
-                                <span class="entity-label {entity['label']}">{entity['label']}</span>
-                                <strong>{entity['text']}</strong>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    else:
-                        st.info("No named entities detected.")
+                    st.markdown('<div class="chat-window">', unsafe_allow_html=True)
+                    st.markdown("### Original Text with Detected Entities")
                     
-                    st.subheader("🤖 LLM Response")
-                    st.markdown(f"""
-                    <div class="response-box">
-                        {result["llm_response"]}
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.subheader("📝 Original Text with Highlighted Entities")
                     highlighted_text = user_input
                     for entity in result["entities"]:
                         highlighted_text = highlighted_text.replace(
                             entity["text"],
-                            f'<span class="highlight entity-label {entity["label"]}">{entity["text"]}</span>'
+                            f'<span class="entity-highlight {entity["label"]}">{entity["text"]}</span>'
                         )
                     st.markdown(highlighted_text, unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    st.markdown('<div class="entity-details">', unsafe_allow_html=True)
+                    st.markdown("### Detected Entities")
+                    
+                    for entity in result["entities"]:
+                        st.markdown(f"""
+                        <div class="entity-item">
+                            <div>
+                                <strong>{entity['label']}</strong>
+                                <div>{entity['text']}</div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    st.markdown("### Analysis")
+                    st.markdown(f"""
+                    <div class="entity-details">
+                        {result["llm_response"]}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
                 else:
                     st.error("Error processing the request.")
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
-        st.warning("Please enter some text first.") 
+        st.warning("Please enter some text first.")
+
+st.markdown('</div>', unsafe_allow_html=True) 

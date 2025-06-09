@@ -1,7 +1,7 @@
 # NER and LLM Demo
 
 ## Demo
-![NER and LLM Demo](ezgif-338d2c914368f5.gif)
+![NER and LLM Demo](ezgif-342970b488b1de.gif)
 
 This project demonstrates the integration of Named Entity Recognition (NER) using spaCy and a Local LLM using Ollama, with a modern Streamlit frontend.
 
